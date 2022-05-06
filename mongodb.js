@@ -6,6 +6,8 @@ class mongo {
   }
   createMongoConnection() {
     // mongoose.connect(`mongodb://localhost:27017/swiggy`);
+
+
     mongoose.connect(process.env.Mongo_url);
     mongoose.connection.once(`open`, () => {
       console.log(`MongoDB is connected`);

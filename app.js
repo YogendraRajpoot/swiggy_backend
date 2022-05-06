@@ -1,11 +1,16 @@
+const dotenv = require('dotenv')
+const restaurantRouter = require('./routes/restaurant')
+const authRouter = require('./routes/auth')
+const paymentRouter = require('./routes/payment');
 const express = require("express");
 const app = express();
 const userModel = require("./Models/user");
 const restaurantModel=require("./Models/restaurant")
 const bodyParser = require("body-parser");
 const cors = require("cors");
-// const data=require("./data.json")
 
+// const data=require("./data.json")
+dotenv.config();
 
 app.use(bodyParser.json([]));
 
@@ -13,8 +18,12 @@ app.use(cors());
 
 app.get("/", (req, res) => {
   // console.log(data);
-  res.send("Welcome to Home page my book api");
+  res.send("Welcome to Swiggy-Clone Backend Server! endpoint : /api/ :D");
 });
+
+app.use("/api/customer",authRouter)
+app.use("/api/restaurant",restaurantRouter)
+app.use('/api/razor',paymentRouter)
 
 app.post("/user", async (req, res, next) => {
   try {
