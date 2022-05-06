@@ -5,7 +5,7 @@ class mongo {
   }
   createMongoConnection() {
     // mongoose.connect(`mongodb://localhost:27017/swiggy`);
-    mongoose.connect(`mongodb+srv://swiggy:HaljxyagASK0rcCy@cluster0.xszpp.mongodb.net/swiggy?retryWrites=true&w=majority`);
+    mongoose.connect(`mongodb+srv://swiggy:E1aYE5ktHiqXMjmm@cluster0.xszpp.mongodb.net/swiggy?retryWrites=true&w=majority`);
     mongoose.connection.once(`open`, () => {
       console.log(`MongoDB is connected`);
     });
