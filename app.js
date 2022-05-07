@@ -21,7 +21,8 @@ app.get("/", (req, res) => {
   res.send("Welcome to Swiggy-Clone Backend Server! endpoint : /api/ :D");
 });
 
-app.use("/api/customer",authRouter)
+app.use("/api/customer",authRouter.router);
+app.use("/api/customer/logout",authRouter.signOut);
 app.use("/api/restaurant",restaurantRouter)
 app.use('/api/razor',paymentRouter)
 

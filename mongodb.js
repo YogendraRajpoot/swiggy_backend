@@ -1,11 +1,12 @@
 const mongoose = require(`mongoose`);
+const Mongo_url = process.env.Mongo_url;
 class mongo {
   constructor() {
     this.createMongoConnection();
   }
   createMongoConnection() {
     // mongoose.connect(`mongodb://localhost:27017/swiggy`);
-    mongoose.connect(`mongodb+srv://swiggy:E1aYE5ktHiqXMjmm@cluster0.xszpp.mongodb.net/swiggy?retryWrites=true&w=majority`);
+    mongoose.connect(Mongo_url);
     mongoose.connection.once(`open`, () => {
       console.log(`MongoDB is connected`);
     });

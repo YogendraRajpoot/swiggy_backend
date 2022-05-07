@@ -1,9 +1,11 @@
 const express = require('express');
 const {loginValidation,registerationValidation} = require('../validation')
 const userModel = require('../Models/user')
+const tokenModel = require('../Models/token');
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const dotenv = require('dotenv')
+const JWTService = require('../services/JWT');
 let userOtp = 0;
 
 dotenv.config();
@@ -26,26 +28,26 @@ router.post('/register',async(req,res)=>{
         return res.status(400).send(error.details[0].message)
     }
 
-    // const phoneNumberExists = await user.find({"number":req.body.number});
-    // if(phoneNumberExists){
-    //     return res.status(400).send("Phone number already exists")
-    // }
+    const phoneNumberExists = await user.find({"number":req.body.number});
+    if(phoneNumberExists){
+        return res.status(400).send("Phone number already exists")
+    }
 
-    // const emailExists = await user.find({"email":req.body.email});
-    // if(emailExists){
-    //     return res.status(400).send("Email already exists in the Database")
-    // }
+    const emailExists = await user.find({"email":req.body.email});
+    if(emailExists){
+        return res.status(400).send("Email already exists in the Database")
+    }
     
     try{
         userOtp = randomOtp()
         client.messages
         .create({
-            body: `OTP for Sweggy registration is ${userOtp}`,
+            body: `OTP for Swiggy registration is ${userOtp}`,
             from: '+19793887530',
             to: `+91${req.body.number}`
         })
         .then(message => console.log(message.sid));
-        res.status(200).send("OTP sent successfully")
+        res.status(200).send(`OTP sent successfully : OTP is - ${userOtp}`)
     } catch(err){
         res.status(400).send(err)
     }
@@ -62,9 +64,19 @@ router.post('/register/verify',async(req,res)=>{
             // })
             const userDetails = req.body;
             console.log(Number(req.body.otp), userDetails);
-                const savedCustomer = await userModel.insertMany(userDetails);
+                const savedCustomer = await userModel.insertMany([userDetails]);
+                //Generate JWT token and send back to frontend
+                let JWTtoken = JWTService.generateToken(userDetails);
+                //Insert token in DB
+                // console.log(savedCustomer[0]._id, JWTtoken);
+                let tokenResp = await tokenModel.insertMany([{ userId: savedCustomer[0]._id, token: JWTtoken }]);
+                
                 console.log(savedCustomer);
-                res.send(savedCustomer)
+                res.json({
+                    status: 'success',
+                    token: JWTtoken,
+                    savedCustomer
+                })
         }
         else{
             res.status(400).send("Invalid OTP")
@@ -95,22 +107,46 @@ router.post('/login',async(req,res)=>{
             to: `+91${req.body.number}`
         })
         .then(message => console.log(message.sid));
-        res.status(200).send("OTP sent successfully")
+        res.status(200).send(`OTP sent successfully : OTP is - ${userOtp}`)
     } catch(err){
         res.status(400).send(err)
     }
 })
 
 router.post('/login/verify',async(req,res)=>{
-
+    
     if(userOtp==Number(req.body.otp)){
-        const userData = await userModel.find({"number":req.body.number});
-        res.status(200).send(userData)
+        const userDetail = await userModel.findOne({ number :req.body.number});
+        let userData = {
+            "username": userDetail.username,
+            "email": userDetail.email,
+            "password": userDetail.password,
+            "number": req.body.number
+        }
+        //Generate JWT token and send back to frontend
+        let JWTtoken = JWTService.generateToken(userData);
+        //Insert token in DB
+        await tokenModel.insertMany([{ userId: userDetail._id, token: JWTtoken }]);
+        
+        res.status(200).json({
+            status: 'success',
+            token: JWTtoken,
+            userDetail
+        })
+        // res.status(200).send(userData)
     }
     else{
         res.status(400).send("Invalid OTP")
     }
 })
+
+// for logging out the account
+async function signOut(req, res, next) {
+    //remove token from DB
+    const token = req.body.token;
+    await tokenModel.deleteOne({ token });
+    res.status(200).json({ status: "Success", message: "Token deleted successfully! User logged out!" });
+}
 
 router.patch('/order/:cust_id',async(req,res)=>{
     const id = req.params.cust_id
@@ -153,4 +189,7 @@ router.get('/order/:cust_id',async(req,res)=>{
     }
 })
 
-module.exports = router;
+module.exports = { 
+    router,
+    signOut
+};
