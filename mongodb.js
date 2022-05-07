@@ -1,12 +1,14 @@
 const mongoose = require(`mongoose`);
-const Mongo_url = process.env.Mongo_url;
+require('dotenv').config()
 class mongo {
   constructor() {
     this.createMongoConnection();
   }
   createMongoConnection() {
     // mongoose.connect(`mongodb://localhost:27017/swiggy`);
-    mongoose.connect(Mongo_url);
+
+
+    mongoose.connect(process.env.Mongo_url);
     mongoose.connection.once(`open`, () => {
       console.log(`MongoDB is connected`);
     });
